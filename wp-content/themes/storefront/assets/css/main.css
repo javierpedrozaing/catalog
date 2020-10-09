@@ -1,0 +1,11 @@
+.container h1 {
+    margin-bottom: 40px;
+}
+
+.container form .filter {
+    margin:70px 0px 40px 0px;
+}
+
+.container form table .quantity {
+    width:50px;
+}
