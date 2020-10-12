@@ -69,31 +69,182 @@ if ( version_compare( get_bloginfo( 'version' ), '4.7.3', '>=' ) && ( is_admin()
 }
 
 
+
 // Incluir Bootstrap CSS
 function bootstrap_css() {
-	wp_enqueue_style( 'bootstrap_css',  get_stylesheet_directory_uri() . '/assets/css/bootstrap.min.css',  array(),  '4.1.3' ); 
-	wp_enqueue_style( 'main_css',  get_stylesheet_directory_uri() . '/assets/css/main.css',  array(),  '1.0.0' ); 
+	wp_enqueue_style( 'bootstrap_css',  get_stylesheet_directory_uri() . '/assets/css/bootstrap.min.css',  array(),  '4.1.3' ); 	
 }
 add_action( 'wp_enqueue_scripts', 'bootstrap_css');
 
 // Incluir Bootstrap JS
 function bootstrap_js() {
-	wp_enqueue_script( 'bootstrap_js',  get_stylesheet_directory_uri() . '/assets/js/bootstrap.min.js',  array('jquery'),  '4.1.3',  true); 
-	wp_enqueue_script( 'main_js',  get_stylesheet_directory_uri() . '/assets/js/main.js',  array('jquery'),  '1.0.0',  true); 
+	wp_enqueue_script( 'bootstrap_js',  get_stylesheet_directory_uri() . '/assets/js/bootstrap.min.js',  array('jquery'),  '4.1.3',  true); 	
+
 }
+
 add_action( 'wp_enqueue_scripts', 'bootstrap_js');
+
+
+function storefront_scripts() {
+		
+	wp_enqueue_style( 'main_css',  get_stylesheet_directory_uri() . '/assets/css/main.css',  array(),  '1.0.0' ); 
+	wp_enqueue_script( 'main_js',  get_stylesheet_directory_uri() . '/assets/js/main.js',  array('jquery'),  '1.0.0',  true); 
+
+	global $wp_query;
+	$storefront = array(        
+		'_ajax_url' => admin_url( 'admin-ajax.php' ),
+		'_ajax_nonce'=>wp_create_nonce( 'dhvc_form_ajax_nonce' ),
+		'_themes_url'=>  get_template_directory_uri(),
+		'_site_url'=> get_site_url(),
+		'_current_page' => get_query_var( 'paged' ) ? get_query_var('paged') : 1,
+		'_max_page' => $wp_query->max_num_pages,
+		
+	);
+
+	wp_localize_script('main_js', 'storefront_ajax', $storefront);
+}
+
+add_action( 'wp_enqueue_scripts', 'storefront_scripts');
 
 /**
  * Note: Do not add any custom code here. Please use a custom plugin so that your customizations aren't lost during updates.
  * https://github.com/woocommerce/theme-customisations
  */
 
+function get_data_product($product) {
+	$ID_PRODUCT = $product->get_id();
+	$thumbnail = $product->get_image();
+	$image = $thumbnail[0];
+	$title = $product->get_name();
+	$categories = $product->get_categories();
+	$ref = $product->get_sku();
+	$public_price = $product->get_price();
+	$wholesale_price = get_post_meta($product->get_id(), '_price', true);
+
+	$data = array(
+		'image' => $image,
+		'title' => $title,
+		'categories' => $categories,
+		'ref' => $ref,
+		'talla' => $talla,
+		'public_price' => $public_price,
+		'wholesale_price' => $wholesale_price
+	);
+
+	return $data;
+	
+}
+// Get Woocommerce variation price based on product ID
+function get_variation_price_by_id($product_id, $variation_id) {
+	$currency_symbol = get_woocommerce_currency_symbol();
+	$product = new WC_Product_Variable($product_id);
+	$variations = $product->get_available_variations();
+	$var_data = [];
+	foreach ($variations as $variation) {
+		if($variation['variation_id'] == $variation_id){
+			$display_wholesale_price = '<span class="currency">'. $currency_symbol .'</span>'.$variation['wholesale_price_raw'];			
+		}
+	}
+
+	$priceArray = array(
+		'display_wholesale_price' => $display_wholesale_price,
+		
+	);
+	$priceObject = (object)$priceArray;
+	return $priceObject;
+}
+
+
+function render_products_table($products = "") { ?>
+			
+		<table class="table">
+			<thead class="thead-dark">
+				<tr>
+				<th scope="col">#</th>
+				<th scope="col">Imagen</th>
+				<th scope="col">Producto</th>
+				<th scope="col">Categoría</th>
+				<th scope="col">Ref.</th>
+				<th scope="col">Talla</th>
+				<th scope="col">Precio al público</th>
+				<th scope="col">Precio al por mayor</th>
+				<th scope="col">Cantidad</th>
+				<th scope="col">Total</th>
+				</tr>
+			</thead>
+			<tbody>		
+			<?php if($products && is_array($products)) :  
+				$tallas = [];
+				$variation_wholesale_price = [];
+				$variation_public_price = [];
+				$currency_symbol = get_woocommerce_currency_symbol();
+			?>
+			<?php
+				$datatest = $products[1]->get_available_variations();
+				
+			?>
+			<?php foreach ($products as $keyprod => $product) : 
+				$myProduct = get_data_product($product); 		
+				$available_variations = $product->get_available_variations();		
+				
+
+				foreach ($available_variations as $key => $variation) {
+					$tallas[$keyprod][] = $variation['attributes']['attribute_talla'];
+				}
+
+				foreach ($tallas[$keyprod] as $key => $talla) {
+					//var_dump($available_variations[$key]);exit;
+					$variation_wholesale_price[$talla] =  wc_get_price_to_display($product, array( 'price' => $available_variations[$key]['wholesale_price'] ));					
+					$variation_public_price[$talla] = wc_get_price_to_display($product, array( 'price' => $available_variations[$key]['display_regular_price'] ));;
+				}				
+				
+				?>	
+				<tr data-id_product="<?= $product->get_id(); ?>">
+					<th scope="row"><?= $keyprod+1 ?></th>
+					<td><img src="" alt=""></td>
+					<td><?= $myProduct['title']; ?></td>
+					<td>					
+						<span data-id-category="<?= $category->term_id; ?>"><?= $myProduct['categories']; ?></span>					
+					</td>
+					<td><?= $myProduct['ref']; ?></td>
+					<td>		
+						<select name="talla-producto" class="product-talla">		
+							<option value="">Talla</option>					
+							<?php  foreach ($tallas[$keyprod] as $key => $talla) : ?>
+								<option data-wholesale_price="<?= $variation_wholesale_price[$talla]; ?>" data-public_price="<?=  $variation_public_price[$talla] ?>" value="<?= $talla ?>"><?= $talla ?></option>	
+							<?php endforeach; ?>							
+						</select>
+					</td>
+					<td class="public-price"><span class="message-price">Seleccionar talla</span><span class="variation-price"></span></td>
+					<td class="wholesale-price"><span class="message-price">Seleccionar talla</span><span class="variation-price"></span></td>
+					<td><input disabled  class="quantity" min="0" value="0" type="number"></td>
+					<td><span class="totla"></span> </td>
+				</tr>
+			<?php endforeach; endif; ?>
+			</tbody>
+		</table>	
+<?php	
+wp_die();
+}
+
+
+
+function get_all_products() {
+	// Get draft products.
+	$args = array(
+		'status' => 'publish',
+	);
+	$products = wc_get_products( $args );
+	render_products_table($products);
+}
+add_action( 'wp_ajax_nopriv_get_all_products', 'get_all_products' );
+add_action( 'wp_ajax_get_all_products', 'get_all_products' );
 
 
 /**
  * * Get values for each filter type
 */
- function get_type_filter_values($type) {
+function get_type_filter_values($type) {
 
 	switch ($type) {
 		case 'collection':
@@ -105,36 +256,32 @@ add_action( 'wp_enqueue_scripts', 'bootstrap_js');
 			break;
 	}
 
- }
+}
+ 
+function filter_products() {
 
+}
 
- /**
- * * Filter products
-*/
+function update_price_by_talla() {
+	$idProduct = $_POST['product_id'];
+	$talla = $_POST['talla'];
+	$getProduct = wc_get_product( $idProduct );
+	$public_price = $getProduct->get_price();
+	$wholesale_price = get_variation_price_by_id();
+}
 
- function filter_products($filter) {
+add_action( 'wp_ajax_nopriv_update_price_by_talla', 'update_price_by_talla' );
+add_action( 'wp_ajax_update_price_by_talla', 'update_price_by_talla' );
 
- }
+function update_price_by_quantity() {
+
+}
+
 
 /**
- * * Update price for each product accord to talla
-*/
+ * save order datails
+ */
 
- function update_price_by_talla() {
-
- }
-
- /**
- * * Update price for each product accord to qunatity
-*/
-
- function update_price_by_quantity() {
-
- }
-
- /**
- * * save order details
-*/
  function save_order() {
 
  }

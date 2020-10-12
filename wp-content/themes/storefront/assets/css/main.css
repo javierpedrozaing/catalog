@@ -6,6 +6,16 @@
     margin:70px 0px 40px 0px;
 }
 
+.container .content-products .message-price{
+    color:#ccc;
+}
+
 .container form table .quantity {
     width:50px;
+}
+
+.loader-ajax {
+    position: absolute;
+    margin: 35%;
+    padding: 30px;
 }
