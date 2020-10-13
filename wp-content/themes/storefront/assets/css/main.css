@@ -6,11 +6,11 @@
     margin:70px 0px 40px 0px;
 }
 
-.container .content-products .message-price{
+.container .content-products .message-price {
     color:#ccc;
 }
 
-.container form table .quantity {
+.container form table .quantity, .container form table .total-quantity {
     width:55px;
 }
 
@@ -18,4 +18,12 @@
     position: absolute;
     margin: 35%;
     padding: 30px;
+}
+
+.content-products table tbody td, .content-products table tbody th{
+    vertical-align: middle;
+}
+
+.catalog .totals-row strong{
+    float: right;
 }

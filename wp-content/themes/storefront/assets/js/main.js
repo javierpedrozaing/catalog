@@ -26,16 +26,22 @@
                 showAjaxLoader();
             },
             success:function(response) {                        
-                $('.catalog.container .content-products').html(response);             
+                $('.catalog.container .content-products').html(response);
             },
             complete:function() {
                 hideAjaxLoader();
                 getAllRowProducts();
+
+                $('.catalog .type-filter').on("change", function() {
+                    $('.catalog .select-filter').attr('disabled', true);
+                    let type = $(this).val();
+                    updateFilterOptions(type);
+                });                
             }
         });
     }
 
-    function getAllRowProducts(){        
+    function getAllRowProducts() {        
         $('.catalog .content-products table tbody tr').each(function() {
             let rowProduct = this;            
             let product = $(rowProduct).data('id_product');            
@@ -64,6 +70,72 @@
         return parseFloat(amount).toFixed(decimal).replace(/(\d)(?=(\d{3})+\b)/g, "$1"+sep);
     }
 
+    function updateFilterOptions(type) {
+        typeSelect = type;        
+        select = $('.select-filter');
+        options = [];       
+        filterType = "";
+        switch (typeSelect) {
+            case 'collection':
+                filterType = "product_tag";
+                break;
+            case 'category':
+                filterType = "product_cat";
+                break;        
+            default:
+                filterType = "";
+                break;
+        }
+
+        $.ajax({
+            url : storefront_ajax._ajax_url,
+            data:{'action': 'get_type_filter_values', 'filter_type' : filterType},
+            type:'POST',
+            beforeSend: function( xhr ) {
+                //showAjaxLoader();
+            },
+            success:function(response) { 
+                if (response == 'no_filter') {
+                    $(select).attr('disabled', true);   
+                    $(select).html("<option>Selecciona el tipo de filtro</option>");
+                } else {
+                    $(select).attr('disabled', false);                
+                    $(select).html(response);
+                }                              
+                
+            },
+            complete:function() {
+                setFilterProducts();
+            }
+        });
+
+    }
+
+
+    function setFilterProducts() {
+        let select = $('.catalog .select-filter');
+        let typeFilter = $('.catalog .type-filter').val();        
+        let value = "";
+        $(select).on("change", function() {
+            value = $(this).val();            
+            $.ajax({
+                url : storefront_ajax._ajax_url,
+                data:{'action': 'filter_products', 'type' : typeFilter, 'value' : value},
+                type:'POST',
+                beforeSend: function( xhr ) {
+                    //showAjaxLoader();
+                },
+                success:function(response) { 
+                    $('.catalog.container .content-products').html(response);                    
+                },
+                complete:function() {
+                    getAllRowProducts();
+                }
+            });
+        });
+
+
+    }
     
 
     /**

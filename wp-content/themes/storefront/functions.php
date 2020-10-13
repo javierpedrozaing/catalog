@@ -69,23 +69,12 @@ if ( version_compare( get_bloginfo( 'version' ), '4.7.3', '>=' ) && ( is_admin()
 }
 
 
-
-// Incluir Bootstrap CSS
-function bootstrap_css() {
-	wp_enqueue_style( 'bootstrap_css',  get_stylesheet_directory_uri() . '/assets/css/bootstrap.min.css',  array(),  '4.1.3' ); 	
-}
-add_action( 'wp_enqueue_scripts', 'bootstrap_css');
-
-// Incluir Bootstrap JS
-function bootstrap_js() {
-	wp_enqueue_script( 'bootstrap_js',  get_stylesheet_directory_uri() . '/assets/js/bootstrap.min.js',  array('jquery'),  '4.1.3',  true); 	
-
-}
-
-add_action( 'wp_enqueue_scripts', 'bootstrap_js');
-
-
 function storefront_scripts() {
+
+	if(is_page('catalogo')) {
+		wp_enqueue_style( 'bootstrap_css',  get_stylesheet_directory_uri() . '/assets/css/bootstrap.min.css',  array(),  '4.1.3' ); 		
+		wp_enqueue_script( 'bootstrap_js',  get_stylesheet_directory_uri() . '/assets/js/bootstrap.min.js',  array('jquery'),  '4.1.3',  true);
+	}
 		
 	wp_enqueue_style( 'main_css',  get_stylesheet_directory_uri() . '/assets/css/main.css',  array(),  '1.0.0' ); 
 	wp_enqueue_script( 'main_js',  get_stylesheet_directory_uri() . '/assets/js/main.js',  array('jquery'),  '1.0.0',  true); 
@@ -173,7 +162,7 @@ function render_products_table($products = "") { ?>
 				</tr>
 			</thead>
 			<tbody>		
-			<?php if($products && is_array($products)) :  
+			<?php if(!empty($products) && is_array($products)) :  
 				$tallas = [];
 				$variation_wholesale_price = [];
 				$variation_public_price = [];
@@ -201,7 +190,8 @@ function render_products_table($products = "") { ?>
 				?>	
 				<tr data-id_product="<?= $product->get_id(); ?>">
 					<th scope="row"><?= $keyprod+1 ?></th>
-					<td><img src="" alt=""></td>
+					<?php $image = wp_get_attachment_image_src( get_post_thumbnail_id( $product->get_id() ), 'single-post-thumbnail' );?>
+					<td><img src="<?= $image[0]; ?>" alt=""></td>
 					<td><?= $myProduct['title']; ?></td>
 					<td>					
 						<span data-id-category="<?= $category->term_id; ?>"><?= $myProduct['categories']; ?></span>					
@@ -220,13 +210,22 @@ function render_products_table($products = "") { ?>
 					<td><input disabled  class="quantity" min="0" value="0" type="number"></td>
 					<td><span class="total-price"></span> </td>
 				</tr>
-			<?php endforeach; endif; ?>
+			<?php endforeach; else:  ?>
+				<div class="alert alert-warning" role="alert">
+					No se encontraron productos para el filtro seleccionado.
+				</div>
+			<?php endif; ?>
+			<tr class="totals-row">
+				<td colspan="7"></td>
+				<td><strong>Total: </strong></td>
+				<td><input disabled class="total-quantity" type="text"></td>
+				<td><span class="total-price"> </span></td>
+			</tr>
 			</tbody>
 		</table>	
 <?php	
 wp_die();
 }
-
 
 
 function get_all_products() {
@@ -244,38 +243,77 @@ add_action( 'wp_ajax_get_all_products', 'get_all_products' );
 /**
  * * Get values for each filter type
 */
-function get_type_filter_values($type) {
+ 
+function get_type_filter_values() {
+	$filterType = $_POST['filter_type'];	
+	$args = array(
+		'orderby'    => $orderby,
+		'order'      => $order,
+		'hide_empty' => $hide_empty,
+	);	
+	$html = "";
 
-	switch ($type) {
-		case 'collection':
-			
+	$options = [];
+
+	switch ($filterType) {
+		case 'product_tag':
+			$options = get_terms( 'product_tag', $args );
 			break;
 		
-		default: // category
-			
+		case 'product_cat':
+			$options = get_terms( 'product_cat', $args );
+			break;
+		default: // cateogry
+			$options =  "no_filter";
 			break;
 	}
 
+
+	if ($options == 'no_filter') {
+		echo 'no_filter';wp_die();
+	}
+	
+	foreach ($options as $key => $option) {
+		$html .= "<option>" . $option->name . "</option>";
+	}
+	//echo wp_json_encode($response);
+
+	echo $html;
+
+	wp_die();
+
 }
- 
+
+add_action( 'wp_ajax_nopriv_get_type_filter_values', 'get_type_filter_values' );
+add_action( 'wp_ajax_get_type_filter_values', 'get_type_filter_values' );
+
+
 function filter_products() {
+	$type = $_POST['type'];
+	$value = $_POST['value'];
+
+
+	if ($type == 'category' ) {		
+		$args = array(       
+			'state' 			=> 'publish',
+            'posts_per_page'    =>  -1,            
+            'product_cat'       => $value,          
+        );
+	} else {
+		$args = array(
+			'state' 			=> 'publish',
+            'posts_per_page'    =>  -1,            
+            'product_tag'       => $value,          
+        );
+	}
+	
+	$products = wc_get_products( $args );	
+	render_products_table($products);
+
 
 }
-
-function update_price_by_talla() {
-	$idProduct = $_POST['product_id'];
-	$talla = $_POST['talla'];
-	$getProduct = wc_get_product( $idProduct );
-	$public_price = $getProduct->get_price();
-	$wholesale_price = get_variation_price_by_id();
-}
-
-add_action( 'wp_ajax_nopriv_update_price_by_talla', 'update_price_by_talla' );
-add_action( 'wp_ajax_update_price_by_talla', 'update_price_by_talla' );
-
-function update_price_by_quantity() {
-
-}
+add_action( 'wp_ajax_nopriv_filter_products', 'filter_products' );
+add_action( 'wp_ajax_filter_products', 'filter_products' );
 
 
 /**
@@ -285,3 +323,15 @@ function update_price_by_quantity() {
  function save_order() {
 
  }
+
+
+ add_filter( 'woocommerce_return_to_shop_redirect', 'redirect_to_catalog' );
+/**
+ * Redirect WooCommerce Shop URL
+ */
+
+function redirect_to_catalog(){
+
+return site_url() . '/catalogo';
+
+}

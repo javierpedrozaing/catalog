@@ -108,7 +108,7 @@ if ( ! function_exists( 'storefront_product_search' ) ) {
 		if ( storefront_is_woocommerce_activated() ) {
 			?>
 			<div class="site-search">
-				<?php the_widget( 'WC_Widget_Product_Search', 'title=' ); ?>
+				<?#php the_widget( 'WC_Widget_Product_Search', 'title=' ); ?>
 			</div>
 			<?php
 		}
@@ -133,10 +133,10 @@ if ( ! function_exists( 'storefront_header_cart' ) ) {
 			?>
 		<ul id="site-header-cart" class="site-header-cart menu">
 			<li class="<?php echo esc_attr( $class ); ?>">
-				<?php storefront_cart_link(); ?>
+				<?#php storefront_cart_link(); ?>
 			</li>
 			<li>
-				<?php the_widget( 'WC_Widget_Cart', 'title=' ); ?>
+				<?#php the_widget( 'WC_Widget_Cart', 'title=' ); ?>
 			</li>
 		</ul>
 			<?php
