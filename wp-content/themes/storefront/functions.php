@@ -168,10 +168,7 @@ function render_products_table($products = "") { ?>
 				$variation_public_price = [];
 				$currency_symbol = get_woocommerce_currency_symbol();
 			?>
-			<?php
-				$datatest = $products[1]->get_available_variations();
-				
-			?>
+			
 			<?php foreach ($products as $keyprod => $product) : 
 				$myProduct = get_data_product($product); 		
 				$available_variations = $product->get_available_variations();		
@@ -274,7 +271,7 @@ function get_type_filter_values() {
 	}
 	
 	foreach ($options as $key => $option) {
-		$html .= "<option>" . $option->name . "</option>";
+		$html .= '<option value='. $option->slug . '>' . $option->name . '</option>';
 	}
 	//echo wp_json_encode($response);
 
