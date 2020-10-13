@@ -145,10 +145,7 @@
      */
 
     function updatePriceAccordToTalla(item, publicPrice, wholesalePrice) {
-        let productRow = $(item);   
-        console.log("item row => ", $(item).data('id_product'));         
-        console.log("public price => ", publicPrice); 
-        console.log("mayorista price => ", wholesalePrice);
+        let productRow = $(item);           
         $(productRow).find('.message-price').hide();
         let publicPriceHtml = "<span>$"+ publicPrice +"</span>";
         let wholesalePriceHtml = "<span>$"+ wholesalePrice +"</span>";
@@ -162,8 +159,9 @@
         var total_whosale = 0;
         var total = 0;
         var whosale_price = wholesalePrice.split('.').join("");
-        var public_price = publicPrice.split('.').join("");
-        $(productRow).find('.quantity').on("change", function() {
+        var public_price = publicPrice.split('.').join("");     
+         
+        $(productRow).find('.quantity').on("change", function() {            
             let quantity = $(this).val();                
             if (quantity <= 1) {                    
                 total_public = public_price * quantity;       
@@ -172,14 +170,33 @@
                 total_whosale = whosale_price *  quantity;
                 total  = total_whosale;
             }    
-            
+            $(productRow).find('.subtotal-price').data('dataprice', total);
             total = formatValueWithoutHTML(total, '.', 0);
-            $(productRow).find('.total-price').html('$' + total);
-            console.log("total price => ", total);
-    
+            $(productRow).find('.subtotal-price').html('$' + total);
+                        
+            setTotalPriceAndQuantity();            
+           
         });
-             
+
     }
+
+    function setTotalPriceAndQuantity() {
+        let totalprice = 0
+        let quantity = 0;
+        $('.catalog .content-products table tbody tr').each(function() {
+            let subtotal = $(this).find('.subtotal-price').data('dataprice');
+            let subquantity = $(this).find('.quantity').val();
+            if (subtotal) totalprice += parseFloat(subtotal);
+            if (subquantity) quantity += parseInt(subquantity);            
+            let totalfinalprice = formatValueWithoutHTML(totalprice, '.', 0);
+            $('.content-products .totals-row .total-quantity').val(quantity);            
+            $('.content-products .totals-row .total-price').html('$' + totalfinalprice);
+        });
+        
+    }
+
+             
+
 
     $(document).ready(function() {
         getAllProducts();        
