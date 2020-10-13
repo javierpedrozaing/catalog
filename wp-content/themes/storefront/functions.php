@@ -218,7 +218,7 @@ function render_products_table($products = "") { ?>
 					<td class="public-price"><span class="message-price">Seleccionar talla</span><span class="variation-price"></span></td>
 					<td class="wholesale-price"><span class="message-price">Seleccionar talla</span><span class="variation-price"></span></td>
 					<td><input disabled  class="quantity" min="0" value="0" type="number"></td>
-					<td><span class="totla"></span> </td>
+					<td><span class="total-price"></span> </td>
 				</tr>
 			<?php endforeach; endif; ?>
 			</tbody>

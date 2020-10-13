@@ -48,6 +48,7 @@
                     let publicPrice = formatValueWithoutHTML(selected.data('public_price'), '.');
                     let wholesalePrice = formatValueWithoutHTML(selected.data('wholesale_price'), '.');
                     updatePriceAccordToTalla(rowProduct, publicPrice, wholesalePrice);    
+                    updateTotalAccordToQuantity(rowProduct, publicPrice, wholesalePrice);                                       
                 } else {
                     $(rowProduct).find('.quantity').attr('disabled', true);
                     $(rowProduct).find('.variation-price').hide();
@@ -81,6 +82,31 @@
         let wholesalePriceHtml = "<span>$"+ wholesalePrice +"</span>";
         $(productRow).find('td.public-price span.variation-price').html(publicPriceHtml);
         $(productRow).find('td.wholesale-price span.variation-price').html(wholesalePriceHtml);
+    }
+
+    function updateTotalAccordToQuantity(item, publicPrice, wholesalePrice) {
+        let productRow = $(item);
+        var total_public = 0;
+        var total_whosale = 0;
+        var total = 0;
+        var whosale_price = wholesalePrice.split('.').join("");
+        var public_price = publicPrice.split('.').join("");
+        $(productRow).find('.quantity').on("change", function() {
+            let quantity = $(this).val();                
+            if (quantity <= 1) {                    
+                total_public = public_price * quantity;       
+                total = total_public;
+            } else {                    
+                total_whosale = whosale_price *  quantity;
+                total  = total_whosale;
+            }    
+            
+            total = formatValueWithoutHTML(total, '.', 0);
+            $(productRow).find('.total-price').html('$' + total);
+            console.log("total price => ", total);
+    
+        });
+             
     }
 
     $(document).ready(function() {
