@@ -269,7 +269,7 @@ function get_type_filter_values() {
 	if ($options == 'no_filter') {
 		echo 'no_filter';wp_die();
 	}
-	
+	$html .= '<option>Seleccionar categoría</option>';
 	foreach ($options as $key => $option) {
 		$html .= '<option value='. $option->slug . '>' . $option->name . '</option>';
 	}

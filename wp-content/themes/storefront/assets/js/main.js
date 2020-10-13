@@ -123,12 +123,13 @@
                 data:{'action': 'filter_products', 'type' : typeFilter, 'value' : value},
                 type:'POST',
                 beforeSend: function( xhr ) {
-                    //showAjaxLoader();
+                    showAjaxLoader();
                 },
                 success:function(response) { 
                     $('.catalog.container .content-products').html(response);                    
                 },
                 complete:function() {
+                    hideAjaxLoader();
                     getAllRowProducts();
                 }
             });
