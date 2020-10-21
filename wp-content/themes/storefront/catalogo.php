@@ -18,26 +18,26 @@ get_header();
         <div class="form-row">
             <div class="form-group col-md-4">
                 <label for="nombres">Nombres y Apellidos</label>
-                <input type="text" class="form-control" id="nombres">
+                <input type="text" name="nombres" class="form-control" id="nombres">
             </div>
             <div class="form-group col-md-4">
                 <label for="cedula">Cédula o NIT</label>
-                <input type="text" class="form-control" id="cedula">
+                <input type="text" name="cedula" class="form-control" id="cedula">
             </div>
             <div class="form-group col-md-4">
                 <label for="email">Email</label>
-                <input type="email" class="form-control" id="email">
+                <input type="email" name="email" class="form-control" id="email">
             </div>
         </div>
 
         <div class="form-row">
             <div class="form-group col-md-6">
                 <label for="celular">Celular</label>
-                <input type="password" class="form-control" id="celular">
+                <input type="password" name="celular" class="form-control" id="celular">
             </div>
             <div class="form-group col-md-6">
                 <label for="address">Address</label>
-                <input type="text" class="form-control" id="address">
+                <input type="text" name="address" class="form-control" id="address">
             </div>            
         </div>       
 
@@ -47,7 +47,7 @@ get_header();
         
         <div class="content-products"></div>
 
-        <button type="submit" class="btn btn-primary float-right">Enviar pedido</button>
+        <button type="button" class="btn btn-primary float-right send-order">Enviar pedido</button>
     </form>
 </div>
 

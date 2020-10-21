@@ -73,11 +73,13 @@ function storefront_scripts() {
 
 	if(is_page('catalogo')) {
 		wp_enqueue_style( 'bootstrap_css',  get_stylesheet_directory_uri() . '/assets/css/bootstrap.min.css',  array(),  '4.1.3' ); 		
+		wp_enqueue_style( 'sweet_css',  get_stylesheet_directory_uri() . '/assets/css/sweetalert2.min.css',  array(),  '1.0.0' ); 
 		wp_enqueue_script( 'bootstrap_js',  get_stylesheet_directory_uri() . '/assets/js/bootstrap.min.js',  array('jquery'),  '4.1.3',  true);
+		wp_enqueue_script( 'sweetalert_js',  get_stylesheet_directory_uri() . '/assets/js/sweetalert2.min.js',  array('jquery'),  '4.1.3',  true);
 	}
 		
 	wp_enqueue_style( 'main_css',  get_stylesheet_directory_uri() . '/assets/css/main.css',  array(),  '1.0.0' ); 
-	wp_enqueue_script( 'main_js',  get_stylesheet_directory_uri() . '/assets/js/main.js',  array('jquery'),  '1.0.0',  true); 
+	wp_enqueue_script( 'main_js',  get_stylesheet_directory_uri() . '/assets/js/main.js',  array('jquery'),  '1.0.0',  true); 	
 
 	global $wp_query;
 	$storefront = array(        
@@ -195,16 +197,16 @@ function render_products_table($products = "") { ?>
 					</td>
 					<td><?= $myProduct['ref']; ?></td>
 					<td>		
-						<select name="talla-producto" class="product-talla">		
+						<select name="producto" class="product-talla">		
 							<option value="">Talla</option>					
 							<?php  foreach ($tallas[$keyprod] as $key => $talla) : ?>
-								<option data-wholesale_price="<?= $variation_wholesale_price[$talla]; ?>" data-public_price="<?=  $variation_public_price[$talla] ?>" value="<?= $talla ?>"><?= $talla ?></option>	
+								<option data-wholesale_price="<?= $variation_wholesale_price[$talla]; ?>" data-public_price="<?=  $variation_public_price[$talla] ?>" value="<?= $talla.'&'.$product->get_id().'&'.$variation_public_price[$talla] ?>"><?= $talla ?></option>	
 							<?php endforeach; ?>							
 						</select>
 					</td>
 					<td class="public-price"><span class="message-price">Seleccionar talla</span><span class="variation-price"></span></td>
 					<td class="wholesale-price"><span class="message-price">Seleccionar talla</span><span class="variation-price"></span></td>
-					<td><input disabled  class="quantity" min="0" value="0" type="number"></td>
+					<td><input disabled  class="quantity" name="quantity_<?= $product->get_id() ?>" min="0" value="0" type="number"></td>
 					<td><span class="subtotal-price"></span> </td>
 				</tr>
 			<?php endforeach; else:  ?>
@@ -312,14 +314,123 @@ function filter_products() {
 add_action( 'wp_ajax_nopriv_filter_products', 'filter_products' );
 add_action( 'wp_ajax_filter_products', 'filter_products' );
 
-
 /**
  * save order datails
  */
 
- function save_order() {
 
- }
+ add_action('woocommerce_checkout_process', 'create_order');
+
+function create_order() {
+	global $woocommerce;
+	// here we are creating the users address.  All of these variables have been assigned data previously in the submission process
+
+	$user = _wp_get_current_user();
+	
+	$customerData = $_POST['customerData'];
+	$productsData = $_POST['products'];
+
+	$firstname = $customerData[0]['value'];
+	$cedula = $customerData[1]['value'];
+	$email = $customerData[2]['value'];
+	$phone = $customerData[3]['value'];
+	$address = $customerData[4]['value'];
+
+	$productos = [];
+	$product_ids = [];
+	$quantities = [];
+	$variations = [];		
+
+	foreach ($productsData as $key => $product) {		
+		if ($product['name'] == "producto" && !empty($product['value'])) {
+			$products = explode("&", $product['value']);
+			$product_ids[] = $products[1];
+			$variations[] = array('id' => $products[1], 'variation' => $products[0]);
+		} else if($product['name'] != "producto") {			
+			$id_product = explode("_", $product['name']);
+			$quantities[] =  array('id' => $id_product[1], 'qty' => $product['value']);
+		}		
+	}
+
+	$address = array(
+		'first_name' => $firstname,
+		'last_name'  => "",
+		'company'    => '',
+		'email'      => $email,
+		'phone'      => $phone,
+		'address_1'  => $address,
+		'address_2'  => '',
+		'city'       => 'Bogotá',
+		'state'      => 'Colombia',
+		'postcode'   => '',
+		'country'    => 'CO'
+	);
+	// first we create the order.  We already have assigned $user_id the user ID of the customer placing the order.
+
+	$order = wc_create_order(array('customer_id' => $user->ID));
+	if (is_wp_error($order)) {
+		echo $order->get_error_message();
+	} else { 
+		// The add_product() function below is located in /plugins/woocommerce/includes/abstracts/abstract_wc_order.php
+		$productVariations = [];
+		$variationsArray =[];
+		$variationsID = [];
+		foreach ($product_ids as $key => $product) {
+			$variableProduct = new WC_Product_Variable($product);
+			$productVariations = $variableProduct->get_available_variations();
+			//echo "variation selected => " . $variations[$key]['variation'] . "<br/>";
+			//echo $productVariations[$key]['attributes']['attribute_talla']. "<br/>";
+			 
+			if ($quantities[$key]['id'] == $product) {
+				$quantity = $quantities[$key]['qty'];
+			}
+
+
+			if ($variations[$key]['id'] == $product) {
+				// $variations[$key]['variation'] == $productVariations[$key]['attributes']['attribute_talla']
+				$variationsID = $productVariations[$key]['variation_id'];
+				$variationsArray['variation'] = $productVariations[$key]['attributes'];	
+
+				$varProduct = new WC_Product_Variation($variationsID);				
+				
+				$wholesale_price = $productVariations[$key]['wholesale_price_raw'];
+				$varProduct->set_price($wholesale_price);
+				$order->add_product($varProduct, $quantity, $variationsArray);
+				$order->calculate_totals();
+				// You can add more products if needed by repeating the above line
+	
+				$shipping_tax = array(); 
+				// Here we're going to assign a custom shipping method.
+	
+				//$shipping_rate = new WC_Shipping_Rate( '', 'Flat Rate', '5.95', $shipping_tax, 'custom_shipping_method' );
+				//$order->add_shipping($shipping_rate);
+				$order->set_address( $address, 'billing' );
+				$order->set_address( $address, 'shipping' );
+				$order->update_status("processing", 'Imported Order From Funnel', TRUE);
+				echo $product . " productos agregados ";	
+			}
+			
+		}
+
+		if ($order) {
+			echo "Tu pedido fue realizado exitosamente";				
+		}
+
+		
+
+		
+
+	}
+
+
+	wp_die();
+	
+	
+}
+
+ add_action( 'wp_ajax_nopriv_create_order', 'create_order' );
+ add_action( 'wp_ajax_create_order', 'create_order' );
+ 
 
 
  add_filter( 'woocommerce_return_to_shop_redirect', 'redirect_to_catalog' );

@@ -187,7 +187,7 @@ if ( !class_exists( 'WWP_Admin_Custom_Fields_Variable_Product' ) ) {
                 <div class="wholesale-prices-options-group options-group" style="border-top: 1px solid #DDDDDD;">
 
                     <header class="form-row form-row-full">
-                        <h4 style="font-size: 14px; margin: 10px 0;"><?php _e( 'Wholesale Prices' , 'woocommerce-wholesale-prices' ); ?></h4>
+                        <h4 style="font-size: 14px; margin: 10px 0;"><?php _e( 'Precio al por Mayor' , 'woocommerce-wholesale-prices' ); ?></h4>
                         <p style="margin:0; padding:0; line-height: 16px; font-style: italic; font-size: 13px;"><?php _e( 'Wholesale prices are set per role and currency.<br/><br/><b>Note:</b> Wholesale price must be set for the base currency to enable wholesale pricing for that role. The base currency will be used for conversion to other currencies that have no wholesale price explicitly set (Auto).' , 'woocommerce-wholesale-prices' ); ?></p>
                     </header>
 
@@ -269,8 +269,8 @@ if ( !class_exists( 'WWP_Admin_Custom_Fields_Variable_Product' ) ) {
                 <div class="wholesale-prices-options-group options-group" style="border-top: 1px solid #DDDDDD;">
 
                     <header class="form-row form-row-full">
-                        <h4 style="font-size: 14px; margin: 10px 0;"><?php _e( 'Wholesale Prices' , 'woocommerce-wholesale-prices' ); ?></h4>
-                        <p style="margin:0; padding:0; line-height: 16px; font-style: italic; font-size: 13px;"><?php _e( 'Wholesale Price for this product' , 'woocommerce-wholesale-prices' ); ?></p>
+                        <h4 style="font-size: 14px; margin: 10px 0;"><?php _e( 'Precio al por mayor' , 'woocommerce-wholesale-prices' ); ?></h4>
+                        <p style="margin:0; padding:0; line-height: 16px; font-style: italic; font-size: 13px;"><?php _e( '' , 'woocommerce-wholesale-prices' ); ?></p>
                     </header>
 
                     <?php foreach ( $all_wholesale_roles as $role_key => $role ) {
@@ -282,7 +282,7 @@ if ( !class_exists( 'WWP_Admin_Custom_Fields_Variable_Product' ) ) {
                         <div class="form-row form-row-full">
                             <?php
                             $field_id    = $role_key . '_wholesale_prices[' . $loop . ']';
-                            $field_label = $role[ 'roleName' ] . " (" . $currency_symbol . ")";
+                            $field_label = "Precio clientes" . " (" . $currency_symbol . ")";
                             $field_desc  = sprintf( __( 'Only applies to users with the role of %1$s' , 'woocommerce-wholesale-prices' ) , $role[ 'roleName' ] );
                             $field_value = isset( $variable_product_meta[ $role_key . '_wholesale_price' ][ 0 ] ) ? $variable_product_meta[ $role_key . '_wholesale_price' ][ 0 ] : '';
 

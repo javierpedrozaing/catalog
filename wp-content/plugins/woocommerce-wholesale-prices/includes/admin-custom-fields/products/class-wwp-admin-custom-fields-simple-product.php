@@ -389,7 +389,7 @@ if ( !class_exists( 'WWP_Admin_Custom_Fields_Simple_Product' ) ) {
                 <div class="wholesale-prices-options-group options-group options_group" style="border-top: 1px solid #EEEEEE;">
 
                     <header>
-                        <h3 style="padding-bottom: 10px;"><?php _e( 'Wholesale Prices' , 'woocommerce-wholesale-prices' ); ?></h3>
+                        <h3 style="padding-bottom: 10px;"><?php _e( 'Precio al por mayor' , 'woocommerce-wholesale-prices' ); ?></h3>
                         <p style="margin:0; padding:0 12px; line-height: 16px; font-style: italic; font-size: 13px;"><?php _e( 'Wholesale prices are set per role and currency.<br/><br/><b>Note:</b> Wholesale price must be set for the base currency to enable wholesale pricing for that role. The base currency will be used for conversion to other currencies that have no wholesale price explicitly set (Auto).' , 'woocommerce-wholesale-prices'); ?></p>
                     </header>
 
@@ -460,8 +460,8 @@ if ( !class_exists( 'WWP_Admin_Custom_Fields_Simple_Product' ) ) {
                 <div class="wholesale-prices-options-group options-group options_group" style="border-top: 1px solid #EEEEEE;">
 
                     <header>
-                        <h3 style="padding-bottom: 10px;"><?php _e( 'Wholesale Prices' , 'woocommerce-wholesale-prices' ); ?></h3>
-                        <p style="margin:0; padding:0 12px; line-height: 16px; font-style: italic; font-size: 13px;"><?php _e( 'Wholesale Price for this product' , 'woocommerce-wholesale-prices') ?></p>
+                        <h3 style="padding-bottom: 10px;"><?php _e( 'Precio al por Mayor' , 'woocommerce-wholesale-prices' ); ?></h3>
+                        <p style="margin:0; padding:0 12px; line-height: 16px; font-style: italic; font-size: 13px;"><?php _e( '' , 'woocommerce-wholesale-prices') ?></p>
                     </header>
 
                     <?php foreach ( $all_wholesale_roles as $role_key => $role ) {

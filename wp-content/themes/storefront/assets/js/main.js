@@ -36,7 +36,9 @@
                     $('.catalog .select-filter').attr('disabled', true);
                     let type = $(this).val();
                     updateFilterOptions(type);
-                });                
+                });       
+                
+                $('form .send-order').on('click', createOrder );
             }
         });
     }
@@ -194,6 +196,36 @@
             $('.content-products .totals-row .total-price').html('$' + totalfinalprice);
         });
         
+    }
+
+    function createOrder() {
+        let dataForm = $('.catalog.container form').serializeArray();
+        let customerData = dataForm.slice(0,5);
+        let productsData = dataForm.slice(6);
+        debugger;
+        $.ajax({
+            url : storefront_ajax._ajax_url,
+            data:{'action': 'create_order', 'customerData' : customerData, 'products' : productsData},
+            type:'POST',
+            beforeSend: function( xhr ) {
+                showAjaxLoader();
+            },
+            success:function(response) { 
+                console.log(response);
+                Swal.fire({
+                    title: 'Felicitaciones!',
+                    text: response,
+                    icon: 'success',
+                    confirmButtonText: 'Cool'
+                  })
+                //$('.catalog.container .content-products').html(response);                    
+            },
+            complete:function() {
+                hideAjaxLoader();
+                //getAllRowProducts();
+            }
+        });
+        debugger;
     }
 
              
