@@ -50,7 +50,9 @@
             let selectProduct = $(rowProduct).children('td').find('select.product-talla');                        
             $(selectProduct).on('change', function() {       
                 if ($(this).val() != "") {
+                    $(rowProduct).find('.subtotal-price').html('');
                     $(rowProduct).find('.variation-price').show();
+                    $(rowProduct).find('.quantity').val(0);
                     $(rowProduct).find('.quantity').attr('disabled', false);
                     let selected = $(this).find('option:selected');
                     let publicPrice = formatValueWithoutHTML(selected.data('public_price'), '.');
@@ -165,14 +167,10 @@
         var public_price = publicPrice.split('.').join("");     
          
         $(productRow).find('.quantity').on("change", function() {            
-            let quantity = $(this).val();                
-            if (quantity <= 1) {                    
-                total_public = public_price * quantity;       
-                total = total_public;
-            } else {                    
-                total_whosale = whosale_price *  quantity;
-                total  = total_whosale;
-            }    
+            let quantity = $(this).val();                                            
+            total_whosale = whosale_price *  quantity;
+            total  = total_whosale;
+            
             $(productRow).find('.subtotal-price').data('dataprice', total);
             total = formatValueWithoutHTML(total, '.', 0);
             $(productRow).find('.subtotal-price').html('$' + total);
@@ -212,6 +210,7 @@
             },
             success:function(response) { 
                 console.log(response);
+                
                 Swal.fire({
                     title: 'Felicitaciones!',
                     text: response,
@@ -227,8 +226,6 @@
         });
         debugger;
     }
-
-             
 
 
     $(document).ready(function() {

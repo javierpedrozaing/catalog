@@ -167,6 +167,7 @@ function render_products_table($products = "") { ?>
 			<?php if(!empty($products) && is_array($products)) :  
 				$tallas = [];
 				$variation_wholesale_price = [];
+				$variationsID = [];
 				$variation_public_price = [];
 				$currency_symbol = get_woocommerce_currency_symbol();
 			?>
@@ -183,7 +184,8 @@ function render_products_table($products = "") { ?>
 				foreach ($tallas[$keyprod] as $key => $talla) {
 					//var_dump($available_variations[$key]);exit;
 					$variation_wholesale_price[$talla] =  wc_get_price_to_display($product, array( 'price' => $available_variations[$key]['wholesale_price'] ));					
-					$variation_public_price[$talla] = wc_get_price_to_display($product, array( 'price' => $available_variations[$key]['display_regular_price'] ));;
+					$variation_public_price[$talla] = wc_get_price_to_display($product, array( 'price' => $available_variations[$key]['display_regular_price'] ));
+					$variationsID[$talla] =  $available_variations[$key]['variation_id'];
 				}				
 				
 				?>	
@@ -200,7 +202,7 @@ function render_products_table($products = "") { ?>
 						<select name="producto" class="product-talla">		
 							<option value="">Talla</option>					
 							<?php  foreach ($tallas[$keyprod] as $key => $talla) : ?>
-								<option data-wholesale_price="<?= $variation_wholesale_price[$talla]; ?>" data-public_price="<?=  $variation_public_price[$talla] ?>" value="<?= $talla.'&'.$product->get_id().'&'.$variation_public_price[$talla] ?>"><?= $talla ?></option>	
+								<option data-wholesale_price="<?= $variation_wholesale_price[$talla]; ?>" data-public_price="<?=  $variation_public_price[$talla] ?>" value="<?= $variationsID[$talla].'&'.$talla.'&'.$product->get_id().'&'.$variation_wholesale_price[$talla] ?>"><?= $talla ?></option>
 							<?php endforeach; ?>							
 						</select>
 					</td>
@@ -324,9 +326,7 @@ add_action( 'wp_ajax_filter_products', 'filter_products' );
 function create_order() {
 	global $woocommerce;
 	// here we are creating the users address.  All of these variables have been assigned data previously in the submission process
-
-	$user = _wp_get_current_user();
-	
+	$user = _wp_get_current_user();	
 	$customerData = $_POST['customerData'];
 	$productsData = $_POST['products'];
 
@@ -334,23 +334,7 @@ function create_order() {
 	$cedula = $customerData[1]['value'];
 	$email = $customerData[2]['value'];
 	$phone = $customerData[3]['value'];
-	$address = $customerData[4]['value'];
-
-	$productos = [];
-	$product_ids = [];
-	$quantities = [];
-	$variations = [];		
-
-	foreach ($productsData as $key => $product) {		
-		if ($product['name'] == "producto" && !empty($product['value'])) {
-			$products = explode("&", $product['value']);
-			$product_ids[] = $products[1];
-			$variations[] = array('id' => $products[1], 'variation' => $products[0]);
-		} else if($product['name'] != "producto") {			
-			$id_product = explode("_", $product['name']);
-			$quantities[] =  array('id' => $id_product[1], 'qty' => $product['value']);
-		}		
-	}
+	$address1 = $customerData[4]['value'];
 
 	$address = array(
 		'first_name' => $firstname,
@@ -358,71 +342,72 @@ function create_order() {
 		'company'    => '',
 		'email'      => $email,
 		'phone'      => $phone,
-		'address_1'  => $address,
+		'address_1'  => $address1,
 		'address_2'  => '',
 		'city'       => 'Bogotá',
 		'state'      => 'Colombia',
 		'postcode'   => '',
 		'country'    => 'CO'
 	);
-	// first we create the order.  We already have assigned $user_id the user ID of the customer placing the order.
 
-	$order = wc_create_order(array('customer_id' => $user->ID));
-	if (is_wp_error($order)) {
-		echo $order->get_error_message();
-	} else { 
-		// The add_product() function below is located in /plugins/woocommerce/includes/abstracts/abstract_wc_order.php
-		$productVariations = [];
-		$variationsArray =[];
-		$variationsID = [];
-		foreach ($product_ids as $key => $product) {
-			$variableProduct = new WC_Product_Variable($product);
-			$productVariations = $variableProduct->get_available_variations();
-			//echo "variation selected => " . $variations[$key]['variation'] . "<br/>";
-			//echo $productVariations[$key]['attributes']['attribute_talla']. "<br/>";
-			 
-			if ($quantities[$key]['id'] == $product) {
-				$quantity = $quantities[$key]['qty'];
+
+	if (!empty($productsData) && !empty($customerData)) {			
+		$order = wc_create_order(array('customer_id' => $user->ID));
+
+		if (!is_wp_error($order)) {	
+			$variationsID = [];
+			$variationsItem = [];
+			$productsID = [];
+			$whosalesPrice = [];
+			$quantities  = [];
+			$variations = [];
+			foreach ($productsData as $key => $product) {
+
+				if($product['name'] != "producto") {			
+					//$theProduct = explode("_", $product['name']);
+					$quantities[] =  $product['value'];
+				}			
+
+				if ($product['name'] == "producto" && !empty($product['value'])) {
+					$myProduct = explode("&", $product['value']); // explode => $idVariation.'&'.$talla.'&'.$product->get_id().'&'.$variation_wholesale_price[$talla]
+					$variationsID[] = $myProduct[0];
+					$variationsItem[] = $myProduct[1];
+					$productsID[] = $myProduct[2];
+					$whosalesPrice[] = $myProduct[3];	
+				}			
 			}
 
-
-			if ($variations[$key]['id'] == $product) {
-				// $variations[$key]['variation'] == $productVariations[$key]['attributes']['attribute_talla']
-				$variationsID = $productVariations[$key]['variation_id'];
-				$variationsArray['variation'] = $productVariations[$key]['attributes'];	
-
-				$varProduct = new WC_Product_Variation($variationsID);				
-				
-				$wholesale_price = $productVariations[$key]['wholesale_price_raw'];
-				$varProduct->set_price($wholesale_price);
-				$order->add_product($varProduct, $quantity, $variationsArray);
+			foreach ($productsID as $key => $product) {
+				$variableProduct = new WC_Product_Variable($product);
+				//$productVariations = $variableProduct->get_available_variations();
+				$varProduct = new WC_Product_Variation($variationsID[$key]);			
+								
+				foreach ($varProduct->get_variation_attributes() as $attribute=>$attribute_value) {
+					$variations['variation'][$attribute]=$attribute_value;
+				}				
+				$varProduct->set_price($whosalesPrice[$key]);
+				$quantity = $quantities[$key];				
+				$order->add_product($varProduct, $quantity, $variations);
 				$order->calculate_totals();
-				// You can add more products if needed by repeating the above line
-	
+		
 				$shipping_tax = array(); 
 				// Here we're going to assign a custom shipping method.
-	
+			
 				//$shipping_rate = new WC_Shipping_Rate( '', 'Flat Rate', '5.95', $shipping_tax, 'custom_shipping_method' );
 				//$order->add_shipping($shipping_rate);
 				$order->set_address( $address, 'billing' );
 				$order->set_address( $address, 'shipping' );
 				$order->update_status("processing", 'Imported Order From Funnel', TRUE);
-				echo $product . " productos agregados ";	
+				echo $productID . "  agregado ";
 			}
-			
+
+				echo "Tu pedido fue realizado exitosamente";
+		} else {
+			echo $order->get_error_message();
 		}
-
-		if ($order) {
-			echo "Tu pedido fue realizado exitosamente";				
-		}
-
-		
-
-		
-
+	
 	}
-
-
+	
 	wp_die();
 	
 	
