@@ -194,42 +194,97 @@
             $('.content-products .totals-row .total-price').html('$' + totalfinalprice);
         });
         
-    }
+    }    
 
     function createOrder() {
+        let formOrder = $('#data-order');
         let dataForm = $('.catalog.container form').serializeArray();
         let customerData = dataForm.slice(0,5);
         let productsData = dataForm.slice(6);
-        debugger;
-        $.ajax({
-            url : storefront_ajax._ajax_url,
-            data:{'action': 'create_order', 'customerData' : customerData, 'products' : productsData},
-            type:'POST',
-            beforeSend: function( xhr ) {
-                showAjaxLoader();
-            },
-            success:function(response) { 
-                console.log(response);
-                
+        
+        if (formOrder.valid()) {            
+            let productSelected = thereAreProductSelected();
+            debugger;
+            if (productSelected > 0) {
+                $.ajax({
+                    url : storefront_ajax._ajax_url,
+                    data:{'action': 'create_order', 'customerData' : customerData, 'products' : productsData},
+                    type:'POST',
+                    beforeSend: function( xhr ) {
+                        showAjaxLoader();
+                    },
+                    success:function(response) { 
+                        console.log(response);                        
+                        Swal.fire({
+                            title: 'Felicitaciones!',
+                            text: response,
+                            icon: 'success',
+                            confirmButtonText: 'Cool'
+                        })
+                        //$('.catalog.container .content-products').html(response);                    
+                    },
+                    complete:function() {
+                        hideAjaxLoader();
+                        //getAllRowProducts();
+                    }
+                });                
+            } else {
                 Swal.fire({
-                    title: 'Felicitaciones!',
-                    text: response,
-                    icon: 'success',
-                    confirmButtonText: 'Cool'
-                  })
-                //$('.catalog.container .content-products').html(response);                    
-            },
-            complete:function() {
-                hideAjaxLoader();
-                //getAllRowProducts();
+                    title: 'Ocurrio un problema!',
+                    text: "Por favor selecciona al menos un producto del catálogo",
+                    icon: 'error',
+                    confirmButtonText: 'Ok'
+                })
             }
+        } else {
+            location.href = "#data-order";
+        }
+
+    }
+
+    function thereAreProductSelected(){         
+        let inputQty = 0;
+              // validate minimum one product selected
+        $('.table tbody tr').each(function(){                
+            if ($(this).find('td').find('.quantity').val()) {
+                inputQty += parseInt($(this).find('td').find('.quantity').val());
+                console.log("productos seleccionados =>", inputQty);                    
+            }
+            
         });
-        debugger;
+        return inputQty;
     }
 
 
     $(document).ready(function() {
-        getAllProducts();        
+        getAllProducts();  
+        
+        // validate form personal data
+        $('#data-order').validate({
+            rules: {
+                nombres: {
+                    required: true,                    
+                },
+                cedula: "required",            
+                email: {
+                  required: true,
+                  email: true
+                },
+                celular: "required",
+                address: "required",                
+              },
+              messages: {
+                nombres: "Por favor diligenciar el nombre completo.",
+                cedula: "El campo cédula o NIt es requerido.",
+                email: {
+                  required: "Este campo es requerido",
+                  email: "Ingresar un email vàlido Ejm. name@domain.com."
+                },
+                celular: "El campo celular es requerido.",
+                address: "El campo dirección es requerido."
+              }
+        });
+
     });
 
 

@@ -77,9 +77,10 @@ function storefront_scripts() {
 		wp_enqueue_script( 'bootstrap_js',  get_stylesheet_directory_uri() . '/assets/js/bootstrap.min.js',  array('jquery'),  '4.1.3',  true);
 		wp_enqueue_script( 'sweetalert_js',  get_stylesheet_directory_uri() . '/assets/js/sweetalert2.min.js',  array('jquery'),  '4.1.3',  true);
 	}
-		
+	wp_enqueue_script( 'jquery-validate',  get_stylesheet_directory_uri() . '/assets/js/jquery-validate.min.js',  array('jquery'),  '1.0.0',  true); 		
 	wp_enqueue_style( 'main_css',  get_stylesheet_directory_uri() . '/assets/css/main.css',  array(),  '1.0.0' ); 
 	wp_enqueue_script( 'main_js',  get_stylesheet_directory_uri() . '/assets/js/main.js',  array('jquery'),  '1.0.0',  true); 	
+	
 
 	global $wp_query;
 	$storefront = array(        
@@ -397,8 +398,7 @@ function create_order() {
 				//$order->add_shipping($shipping_rate);
 				$order->set_address( $address, 'billing' );
 				$order->set_address( $address, 'shipping' );
-				$order->update_status("processing", 'Imported Order From Funnel', TRUE);
-				echo $productID . "  agregado ";
+				$order->update_status("processing", 'Imported Order From Funnel', TRUE);				
 			}
 
 				echo "Tu pedido fue realizado exitosamente";
